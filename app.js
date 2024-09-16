@@ -81,7 +81,7 @@ app.use("/listing",listingsRouter);
 app.use("/listing/:id/review", reviewsRouter);
 app.use("/",userRouter);
 app.get("/", (req, res) => {
-    res.send("Hello, it's root");
+    res.redirect("/listing");
 });
 
 
