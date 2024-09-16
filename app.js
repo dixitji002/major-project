@@ -59,9 +59,7 @@ const sessionOption = {
         httpOnly: true,
     }
 };
-app.get("/", (req, res) => {
-    res.send("Hello, it's root");
-});
+
 app.use(session(sessionOption));
 app.use(flash());
 
