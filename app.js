@@ -98,3 +98,5 @@ app.use((err, req, res, next) => {
 app.listen(8080, () => {
     console.log("App is listening on port 8080");
 });
+
+console.log(process.env.CLOUD_NAME, process.env.CLOUD_API_KEY, process.env.CLOUD_API_SECRET);

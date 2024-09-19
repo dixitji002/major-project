@@ -1,5 +1,7 @@
 const Listing = require("../models/listing");
 const ExpressError = require("../utils/ExpressError.js");
+const cloudinary = require('../cloudConfig');
+
 
 module.exports.index = async (req,res)=>{
     const allListings = await Listing.find({});
@@ -32,15 +34,29 @@ module.exports.showListing = async (req, res) => {
 }
 
 module.exports.createListing = async (req, res, next) => {
-    const url = req.file.path;
-    const filename = req.file.filename;
-    const newListing = new Listing(req.body.listing);
-    newListing.owner = req.user._id;
-    newListing.image = { url, filename };
-    await newListing.save();
-    req.flash("success", "New Listing Created!");
-    res.redirect("/listing");
+    try {
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: "No file uploaded" });
+        }
+
+        const result = await cloudinary.uploader.upload(req.file.path);
+
+        const url = result.secure_url;
+        const filename = result.public_id;
+
+        const newListing = new Listing(req.body.listing);
+        newListing.owner = req.user._id;
+        newListing.image = { url, filename };
+        await newListing.save();
+
+        req.flash("success", "New Listing Created!");
+        res.redirect("/listing");
+    } catch (error) {
+        console.error("Error creating listing:", error);
+        next(error);
+    }
 };
+
 
 module.exports.renderEditForm = async (req, res) => {
     const { id } = req.params;
@@ -55,10 +71,13 @@ module.exports.renderEditForm = async (req, res) => {
 module.exports.updateListing = async (req, res) => {
     const { id } = req.params;
     const listing = await Listing.findByIdAndUpdate(id, { ...req.body.listing });
-    if(typeof req.file !== "undefined"){
-        const url = req.file.path;
-        const filename = req.file.filename;
-        listing.image = { url, filename };
+    
+    if (req.file) {
+        const result = await cloudinary.uploader.upload(req.file.path);  // Use req.file.path for Cloudinary upload
+        const url = result.secure_url;  // This is the URL of the uploaded image on Cloudinary
+        const filename = result.public_id;  // Public ID of the file in Cloudinary
+    
+        listing.image = { url, filename };  // Save the URL and filename in the database
         await listing.save();
     }
 
